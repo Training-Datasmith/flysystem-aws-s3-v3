@@ -37,6 +37,7 @@ use League\MimeTypeDetection\FinfoMimeTypeDetector;
 use League\MimeTypeDetection\MimeTypeDetector;
 use Psr\Http\Message\StreamInterface;
 use Throwable;
+
 use function trim;
 
 class AwsS3V3Adapter implements FilesystemAdapter, PublicUrlGenerator, ChecksumProvider, TemporaryUrlGenerator
@@ -297,7 +298,7 @@ class AwsS3V3Adapter implements FilesystemAdapter, PublicUrlGenerator, ChecksumP
 
         $attributes = $this->mapS3ObjectMetadata($result->toArray(), $path);
 
-        if ( ! $attributes instanceof FileAttributes) {
+        if (! $attributes instanceof FileAttributes) {
             throw UnableToRetrieveMetadata::create($path, $type, '');
         }
 
@@ -498,7 +499,7 @@ class AwsS3V3Adapter implements FilesystemAdapter, PublicUrlGenerator, ChecksumP
             throw new UnableToProvideChecksum($exception->reason(), $path, $exception);
         }
 
-        if ( ! isset($metadata['ETag'])) {
+        if (! isset($metadata['ETag'])) {
             throw new UnableToProvideChecksum('ETag header not available.', $path);
         }
 

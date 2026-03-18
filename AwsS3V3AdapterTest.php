@@ -9,6 +9,10 @@ use Aws\S3\S3Client;
 use Aws\S3\S3ClientInterface;
 use Exception;
 use Generator;
+
+use function getenv;
+use function iterator_to_array;
+
 use League\Flysystem\AdapterTestUtilities\FilesystemAdapterTestCase;
 use League\Flysystem\ChecksumAlgoIsNotSupported;
 use League\Flysystem\Config;
@@ -21,11 +25,9 @@ use League\Flysystem\UnableToDeleteFile;
 use League\Flysystem\UnableToMoveFile;
 use League\Flysystem\UnableToRetrieveMetadata;
 use League\Flysystem\UnableToWriteFile;
+
 use League\Flysystem\Visibility;
 use RuntimeException;
-
-use function getenv;
-use function iterator_to_array;
 
 /**
  * @group aws
@@ -53,7 +55,7 @@ class AwsS3V3AdapterTest extends FilesystemAdapterTestCase
 
     protected function tearDown(): void
     {
-        if ( ! $this->shouldCleanUp) {
+        if (! $this->shouldCleanUp) {
             return;
         }
 
@@ -93,7 +95,7 @@ class AwsS3V3AdapterTest extends FilesystemAdapterTestCase
         $bucket = getenv('FLYSYSTEM_AWS_S3_BUCKET');
         $region = getenv('FLYSYSTEM_AWS_S3_REGION') ?: 'eu-central-1';
 
-        if ( ! $key || ! $secret || ! $bucket) {
+        if (! $key || ! $secret || ! $bucket) {
             self::markTestSkipped('No AWS credentials present for testing.');
         }
 
@@ -246,9 +248,9 @@ class AwsS3V3AdapterTest extends FilesystemAdapterTestCase
 
     public static function dpFailingMetadataGetters(): iterable
     {
-        yield "mimeType" => [UnableToRetrieveMetadata::mimeType('filename.txt'), 'mimeType'];
-        yield "lastModified" => [UnableToRetrieveMetadata::lastModified('filename.txt'), 'lastModified'];
-        yield "fileSize" => [UnableToRetrieveMetadata::fileSize('filename.txt'), 'fileSize'];
+        yield 'mimeType' => [UnableToRetrieveMetadata::mimeType('filename.txt'), 'mimeType'];
+        yield 'lastModified' => [UnableToRetrieveMetadata::lastModified('filename.txt'), 'lastModified'];
+        yield 'fileSize' => [UnableToRetrieveMetadata::fileSize('filename.txt'), 'fileSize'];
     }
 
     /**
@@ -288,8 +290,8 @@ class AwsS3V3AdapterTest extends FilesystemAdapterTestCase
 
     public static function casesWhereHttpStreamingInfluencesSeekability(): Generator
     {
-        yield "not streaming reads have seekable stream" => [false, true];
-        yield "streaming reads have non-seekable stream" => [true, false];
+        yield 'not streaming reads have seekable stream' => [false, true];
+        yield 'streaming reads have non-seekable stream' => [true, false];
     }
 
     /**
