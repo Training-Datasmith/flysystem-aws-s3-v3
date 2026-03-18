@@ -31,17 +31,14 @@ class S3ClientStub implements S3ClientInterface
     /**
      * @var S3Exception[]
      */
-    private $stagedExceptions = [];
+    private array $stagedExceptions = [];
 
     /**
      * @var ResultInterface[]
      */
-    private $stagedResult = [];
+    private array $stagedResult = [];
 
-    /**
-     * @var Throwable|null
-     */
-    private $exceptionForUpload = null;
+    private ?\Throwable $exceptionForUpload = null;
 
     public function __construct(S3ClientInterface $client)
     {
@@ -107,7 +104,7 @@ class S3ClientStub implements S3ClientInterface
         return $this->actualClient->getIterator($name, $args);
     }
 
-    public function __call($name, array $arguments)
+    public function __call(string $name, array $arguments)
     {
         return $this->actualClient->__call($name, $arguments);
     }
@@ -162,7 +159,7 @@ class S3ClientStub implements S3ClientInterface
         return $this->actualClient->getPaginator($name, $args);
     }
 
-    public function waitUntil($name, array $args = [])
+    public function waitUntil($name, array $args = []): void
     {
         $this->actualClient->waitUntil($name, $args);
     }

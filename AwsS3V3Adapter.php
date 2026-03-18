@@ -131,8 +131,10 @@ class AwsS3V3Adapter implements FilesystemAdapter, PublicUrlGenerator, ChecksumP
             $options = ['Bucket' => $this->bucket, 'Prefix' => $prefix, 'MaxKeys' => 1, 'Delimiter' => '/'];
             $command = $this->client->getCommand('ListObjectsV2', $options);
             $result = $this->client->execute($command);
-
-            return $result->hasKey('Contents') || $result->hasKey('CommonPrefixes');
+            if ($result->hasKey('Contents')) {
+                return true;
+            }
+            return (bool) $result->hasKey('CommonPrefixes');
         } catch (Throwable $exception) {
             throw UnableToCheckDirectoryExistence::forLocation($path, $exception);
         }
@@ -144,9 +146,7 @@ class AwsS3V3Adapter implements FilesystemAdapter, PublicUrlGenerator, ChecksumP
     }
 
     /**
-     * @param string          $path
      * @param string|resource $body
-     * @param Config          $config
      */
     private function upload(string $path, $body, Config $config): void
     {
@@ -306,7 +306,7 @@ class AwsS3V3Adapter implements FilesystemAdapter, PublicUrlGenerator, ChecksumP
 
     private function mapS3ObjectMetadata(array $metadata, string $path): StorageAttributes
     {
-        if (substr($path, -1) === '/') {
+        if (str_ends_with($path, '/')) {
             return new DirectoryAttributes(rtrim($path, '/'));
         }
 

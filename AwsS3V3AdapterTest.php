@@ -32,10 +32,7 @@ use function iterator_to_array;
  */
 class AwsS3V3AdapterTest extends FilesystemAdapterTestCase
 {
-    /**
-     * @var bool
-     */
-    private $shouldCleanUp = false;
+    private bool $shouldCleanUp = false;
 
     /**
      * @var string
@@ -45,12 +42,9 @@ class AwsS3V3AdapterTest extends FilesystemAdapterTestCase
     /**
      * @var S3ClientInterface|null
      */
-    private static $s3Client;
+    private static ?\Aws\S3\S3Client $s3Client = null;
 
-    /**
-     * @var S3ClientStub
-     */
-    private static $stubS3Client;
+    private static ?\League\Flysystem\AwsS3V3\S3ClientStub $stubS3Client = null;
 
     public static function setUpBeforeClass(): void
     {
@@ -282,7 +276,7 @@ class AwsS3V3AdapterTest extends FilesystemAdapterTestCase
             $this->markTestSkipped('The SDK does not support streaming in low versions.');
         }
 
-        $adapter = $this->useAdapter($this->createFilesystemAdapter($streaming));
+        $adapter = $this->useAdapter(static::createFilesystemAdapter($streaming));
         $this->givenWeHaveAnExistingFile('path.txt');
 
         $resource = $adapter->readStream('path.txt');
@@ -305,7 +299,7 @@ class AwsS3V3AdapterTest extends FilesystemAdapterTestCase
      */
     public function configuring_http_streaming_via_options(bool $streaming): void
     {
-        $adapter = $this->useAdapter($this->createFilesystemAdapter($streaming, ['@http' => ['stream' => false]]));
+        $adapter = $this->useAdapter(static::createFilesystemAdapter($streaming, ['@http' => ['stream' => false]]));
         $this->givenWeHaveAnExistingFile('path.txt');
 
         $resource = $adapter->readStream('path.txt');
@@ -322,7 +316,7 @@ class AwsS3V3AdapterTest extends FilesystemAdapterTestCase
      */
     public function use_globally_configured_options(bool $streaming): void
     {
-        $adapter = $this->useAdapter($this->createFilesystemAdapter($streaming, ['ContentType' => 'text/plain+special']));
+        $adapter = $this->useAdapter(static::createFilesystemAdapter($streaming, ['ContentType' => 'text/plain+special']));
         $this->givenWeHaveAnExistingFile('path.txt');
 
         $mimeType = $adapter->mimeType('path.txt')->mimeType();
@@ -403,7 +397,7 @@ class AwsS3V3AdapterTest extends FilesystemAdapterTestCase
      */
     public function moving_a_file_with_visibility(): void
     {
-        $this->runScenario(function () {
+        $this->runScenario(function (): void {
             $adapter = $this->adapter();
             $adapter->write(
                 'source.txt',
@@ -442,7 +436,7 @@ class AwsS3V3AdapterTest extends FilesystemAdapterTestCase
      */
     public function copying_a_file_with_visibility(): void
     {
-        $this->runScenario(function () {
+        $this->runScenario(function (): void {
             $adapter = $this->adapter();
             $adapter->write(
                 'source.txt',
