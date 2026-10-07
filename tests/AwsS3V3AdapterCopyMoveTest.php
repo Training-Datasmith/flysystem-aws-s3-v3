@@ -43,6 +43,29 @@ final class AwsS3V3AdapterCopyMoveTest extends TestCase
         self::assertSame('private', $copy['ACL']);
     }
 
+    public function testCopyRetainsVisibilityFromGetObjectAclByDefault(): void
+    {
+        [$client, $mock, $recorded] = MockS3Factory::create();
+        $mock->append(
+            new Result(['Grants' => [[
+                'Grantee' => ['URI' => 'http://acs.amazonaws.com/groups/global/AllUsers'],
+                'Permission' => 'READ',
+            ]]]),
+            MockS3Factory::headObjectFile(['ContentLength' => 4]),
+            new Result([]),
+        );
+        $adapter = new AwsS3V3Adapter($client, 'test-bucket', 'root');
+
+        $adapter->copy('from.txt', 'to.txt', new Config());
+
+        $acl = MockS3Factory::firstCommandNamed($recorded, 'GetObjectAcl');
+        self::assertNotNull($acl);
+        self::assertSame('root/from.txt', $acl['Key']);
+
+        $copy = MockS3Factory::firstCommandNamed($recorded, 'CopyObject');
+        self::assertSame('public-read', $copy['ACL']);
+    }
+
     public function testCopyAclOnlyWithDefaultRetainVisibilitySkipsAclLookup(): void
     {
         [$client, $mock, $recorded] = MockS3Factory::create();

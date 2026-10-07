@@ -34,16 +34,20 @@ final class AwsS3V3AdapterListingTest extends TestCase
         self::assertFalse($adapter->directoryExists('dir'));
     }
 
-    public function testDirectoryExistsForwardsRequestPayer(): void
+    public function testDirectoryExistsForwardsRequestPayerAndHttpOptions(): void
     {
         [$client, $mock, $recorded] = MockS3Factory::create();
         $mock->append(new Result([]));
-        $adapter = new AwsS3V3Adapter($client, 'test-bucket', 'root', null, null, ['RequestPayer' => 'requester']);
+        $adapter = new AwsS3V3Adapter($client, 'test-bucket', 'root', null, null, [
+            'RequestPayer' => 'requester',
+            '@http' => ['timeout' => 10],
+        ]);
 
         $adapter->directoryExists('dir');
 
         $command = MockS3Factory::firstCommandNamed($recorded, 'ListObjectsV2');
         self::assertSame('requester', $command['RequestPayer']);
+        self::assertSame(10, $command['@http']['timeout']);
     }
 
     public function testShallowListReturnsRelativeFilesAndDirectories(): void
