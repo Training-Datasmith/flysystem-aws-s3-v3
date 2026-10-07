@@ -8,11 +8,19 @@
             "League\\Flysystem\\AwsS3V3\\": ""
         }
     },
+    "autoload-dev": {
+        "psr-4": {
+            "League\\Flysystem\\AwsS3V3\\Tests\\": "tests/"
+        }
+    },
     "require": {
         "php": "^8.0.2",
         "league/flysystem": "^3.10.0",
         "league/mime-type-detection": "^1.0.0",
         "aws/aws-sdk-php": "^3.295.10"
+    },
+    "require-dev": {
+        "phpunit/phpunit": "^9.6"
     },
     "conflict": {
         "guzzlehttp/ringphp": "<1.1.1",

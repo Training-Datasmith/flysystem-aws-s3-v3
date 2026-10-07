@@ -128,7 +128,8 @@ class AwsS3V3Adapter implements FilesystemAdapter, PublicUrlGenerator, ChecksumP
     {
         try {
             $prefix = $this->prefixer->prefixDirectoryPath($path);
-            $options = ['Bucket' => $this->bucket, 'Prefix' => $prefix, 'MaxKeys' => 1, 'Delimiter' => '/'];
+            $options = ['Bucket' => $this->bucket, 'Prefix' => $prefix, 'MaxKeys' => 1, 'Delimiter' => '/']
+                + $this->listOperationOptions();
             $command = $this->client->getCommand('ListObjectsV2', $options);
             $result = $this->client->execute($command);
 
@@ -339,6 +340,24 @@ class AwsS3V3Adapter implements FilesystemAdapter, PublicUrlGenerator, ChecksumP
         return $extracted;
     }
 
+    /**
+     * @return array<string, mixed>
+     */
+    private function listOperationOptions(): array
+    {
+        $options = [];
+
+        if (isset($this->options['RequestPayer'])) {
+            $options['RequestPayer'] = $this->options['RequestPayer'];
+        }
+
+        if (isset($this->options['@http'])) {
+            $options['@http'] = $this->options['@http'];
+        }
+
+        return $options;
+    }
+
     public function mimeType(string $path): FileAttributes
     {
         $attributes = $this->fetchFileMetadata($path, FileAttributes::ATTRIBUTE_MIME_TYPE);
@@ -425,10 +444,14 @@ class AwsS3V3Adapter implements FilesystemAdapter, PublicUrlGenerator, ChecksumP
             return;
         }
 
+        $options = $this->createOptionsFromConfig($config);
+        $options['MetadataDirective'] = $options['params']['MetadataDirective'] ?? 'COPY';
+        $acl = $options['params']['ACL'] ?? null;
+
         try {
             $visibility = $config->get(Config::OPTION_VISIBILITY);
 
-            if ($visibility === null && $config->get(Config::OPTION_RETAIN_VISIBILITY, true)) {
+            if ($acl === null && $visibility === null && $config->get('retain_visibility', true)) {
                 $visibility = $this->visibility($source)->visibility();
             }
         } catch (Throwable $exception) {
@@ -439,8 +462,7 @@ class AwsS3V3Adapter implements FilesystemAdapter, PublicUrlGenerator, ChecksumP
             );
         }
 
-        $options = $this->createOptionsFromConfig($config);
-        $options['MetadataDirective'] = $config->get('MetadataDirective', 'COPY');
+        $acl = $acl ?? $this->visibility->visibilityToAcl($visibility ?: 'private');
 
         try {
             $this->client->copy(
@@ -448,7 +470,7 @@ class AwsS3V3Adapter implements FilesystemAdapter, PublicUrlGenerator, ChecksumP
                 $this->prefixer->prefixPath($source),
                 $this->bucket,
                 $this->prefixer->prefixPath($destination),
-                $this->visibility->visibilityToAcl($visibility ?: 'private'),
+                $acl,
                 $options,
             );
         } catch (Throwable $exception) {
@@ -458,13 +480,13 @@ class AwsS3V3Adapter implements FilesystemAdapter, PublicUrlGenerator, ChecksumP
 
     private function readObject(string $path, bool $wantsStream): StreamInterface
     {
-        $options = ['Bucket' => $this->bucket, 'Key' => $this->prefixer->prefixPath($path)];
+        $options = ['Bucket' => $this->bucket, 'Key' => $this->prefixer->prefixPath($path)] + $this->options;
 
-        if ($wantsStream && $this->streamReads && ! isset($this->options['@http']['stream'])) {
+        if ($wantsStream && $this->streamReads && ! isset($options['@http']['stream'])) {
             $options['@http']['stream'] = true;
         }
 
-        $command = $this->client->getCommand('GetObject', $options + $this->options);
+        $command = $this->client->getCommand('GetObject', $options);
 
         try {
             return $this->client->execute($command)->get('Body');
