@@ -445,7 +445,7 @@ class AwsS3V3Adapter implements FilesystemAdapter, PublicUrlGenerator, ChecksumP
         }
 
         $options = $this->createOptionsFromConfig($config);
-        $options['MetadataDirective'] = $options['params']['MetadataDirective'] ?? 'COPY';
+        $options['MetadataDirective'] = $config->withDefaults($this->options)->get('MetadataDirective', 'COPY');
         $acl = $options['params']['ACL'] ?? null;
 
         try {

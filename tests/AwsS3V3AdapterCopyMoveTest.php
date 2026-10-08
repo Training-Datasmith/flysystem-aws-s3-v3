@@ -113,6 +113,24 @@ final class AwsS3V3AdapterCopyMoveTest extends TestCase
         self::assertSame('REPLACE', $copy['MetadataDirective']);
     }
 
+    public function testCopyHonorsPerCallMetadataDirectiveWithCustomForwardedOptions(): void
+    {
+        [$client, $mock, $recorded] = MockS3Factory::create();
+        $mock->append(
+            MockS3Factory::headObjectFile(['ContentLength' => 4]),
+            new Result([]),
+        );
+        $adapter = new AwsS3V3Adapter($client, 'test-bucket', 'root', null, null, [], true, ['ContentType']);
+
+        $adapter->copy('from.txt', 'to.txt', new Config([
+            'MetadataDirective' => 'REPLACE',
+            'retain_visibility' => false,
+        ]));
+
+        $copy = MockS3Factory::firstCommandNamed($recorded, 'CopyObject');
+        self::assertSame('REPLACE', $copy['MetadataDirective']);
+    }
+
     public function testCopyPrefixesKeysAndCopySource(): void
     {
         [$client, $mock, $recorded] = MockS3Factory::create();
@@ -123,6 +141,9 @@ final class AwsS3V3AdapterCopyMoveTest extends TestCase
         $adapter = new AwsS3V3Adapter($client, 'test-bucket', 'root');
 
         $adapter->copy('from.txt', 'to.txt', new Config(['retain_visibility' => false]));
+
+        $head = MockS3Factory::firstCommandNamed($recorded, 'HeadObject');
+        self::assertSame('root/from.txt', $head['Key']);
 
         $copy = MockS3Factory::firstCommandNamed($recorded, 'CopyObject');
         self::assertSame('root/to.txt', $copy['Key']);
